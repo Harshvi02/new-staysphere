@@ -77,7 +77,7 @@ export default function BookingsPage() {
 
           if (b.aadhaar_front) {
             const { data } = await supabase.storage
-              .from("cabins-images")
+              .from("aadhaar-images")
               .createSignedUrl(b.aadhaar_front, 600);
 
             frontUrl = data?.signedUrl || "";
@@ -85,7 +85,7 @@ export default function BookingsPage() {
 
           if (b.aadhaar_back) {
             const { data } = await supabase.storage
-              .from("cabins-images")
+              .from("aadhaar-images")
               .createSignedUrl(b.aadhaar_back, 600);
 
             backUrl = data?.signedUrl || "";

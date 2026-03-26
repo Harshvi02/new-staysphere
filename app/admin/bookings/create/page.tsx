@@ -66,8 +66,8 @@ export default function CreateBookingPage() {
     const frontPath = `aadhaar/${unique}-front.jpg`;
     const backPath = `aadhaar/${unique}-back.jpg`;
 
-    await supabase.storage.from("cabins-images").upload(frontPath, aadhaarFront);
-    await supabase.storage.from("cabins-images").upload(backPath, aadhaarBack);
+   await supabase.storage.from("aadhaar-images").upload(frontPath, aadhaarFront);
+await supabase.storage.from("aadhaar-images").upload(backPath, aadhaarBack);
 
     const { error } = await supabase.from("bookings").insert([
       {

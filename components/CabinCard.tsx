@@ -17,11 +17,12 @@ export default function CabinCard({ cabin }: { cabin: Cabin }) {
       {/* IMAGE */}
       <div className="relative w-full h-48">
         <Image
-          src={cabin.image_url || "/cabin.jpg"}
-          alt={cabin.name}
-          fill
-          className="object-cover"
-        />
+  src={cabin.image_url || "/cabin.jpg"}
+  alt={cabin.name}
+  fill
+  className="object-cover"
+  unoptimized
+/>
       </div>
 
       {/* CONTENT */}

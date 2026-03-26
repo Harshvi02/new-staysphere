@@ -83,12 +83,13 @@ export default function CabinDetailsPage() {
 
           {/* Image */}
           <Image
-            src={cabin.image_url || "/cabin.jpg"}
-            alt={cabin.name}
-            width={600}
-            height={400}
-            className="rounded-xl object-cover"
-          />
+  src={cabin.image_url || "/cabin.jpg"}
+  alt={cabin.name}
+  width={600}
+  height={400}
+  className="rounded-xl object-cover"
+  unoptimized
+/>
 
           {/* Details */}
           <div>

@@ -61,12 +61,13 @@ export default function CabinDetailsPage() {
         <div className="grid md:grid-cols-2 gap-8">
 
           <Image
-            src={cabin.image_url || "/cabin.jpg"}
-            alt={cabin.name}
-            width={600}
-            height={400}
-            className="rounded-xl object-cover"
-          />
+  src={cabin.image_url || "/cabin.jpg"}
+  alt={cabin.name}
+  width={600}
+  height={400}
+  className="rounded-xl object-cover"
+  unoptimized
+/>
 
           <div>
 

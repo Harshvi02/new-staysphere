@@ -89,12 +89,12 @@ export default function CreateBookingPage() {
       const backFileName = `aadhaar/${uniqueName}-back.jpg`;
 
       await supabase.storage
-        .from("cabins-images")
-        .upload(frontFileName, aadhaarFront);
+  .from("aadhaar-images")
+  .upload(frontFileName, aadhaarFront);
 
-      await supabase.storage
-        .from("cabins-images")
-        .upload(backFileName, aadhaarBack);
+await supabase.storage
+  .from("aadhaar-images")
+  .upload(backFileName, aadhaarBack);
 
       // 🔥 SAVE WITH AMOUNT
       const { error } = await supabase.from("bookings").insert([
