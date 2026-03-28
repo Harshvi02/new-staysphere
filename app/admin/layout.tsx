@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
 
@@ -11,14 +11,35 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
+  // ✅ AUTH GUARD (HOOK ALWAYS TOP LEVEL)
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data } = await supabase.auth.getUser();
+
+      // 👉 agar user login nahi hai → login page bhejo
+      if (!data.user && pathname !== "/admin/login") {
+        router.replace("/admin/login");
+      }
+    };
+
+    checkAdmin();
+  }, [router, pathname]); // ✅ dependency fix
+
+  // ✅ LOGOUT
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.replace("/admin/login"); // ✅ correct redirect
   };
+
+  // ✅ LOGIN PAGE PE SIDEBAR HIDE
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
 
   return (
     <div className="h-screen flex bg-gray-100 overflow-hidden">
@@ -54,7 +75,7 @@ export default function AdminLayout({
       {/* Main Area */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Topbar (Mobile) */}
+        {/* Mobile Topbar */}
         <div className="md:hidden flex items-center justify-between bg-white p-4 border-b sticky top-0 z-40">
           <button
             onClick={() => setMenuOpen(true)}

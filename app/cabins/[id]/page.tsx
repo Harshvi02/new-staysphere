@@ -2,7 +2,7 @@
 
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
-import Link from "next/link";
+// import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -110,12 +110,22 @@ export default function CabinDetailsPage() {
               ₹{cabin.price} / night
             </p>
 
-            <Link
-              href={`/booking?cabinId=${cabin.id}`}
-              className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700"
-            >
-              Book Now
-            </Link>
+           <button
+  onClick={async () => {
+    const { data } = await supabase.auth.getUser();
+
+    if (!data.user) {
+      alert("Please login first ❌");
+      window.location.href = "/login";
+      return;
+    }
+
+    window.location.href = `/booking?cabinId=${cabin.id}`;
+  }}
+  className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700"
+>
+  Book Now
+</button>
 
           </div>
 

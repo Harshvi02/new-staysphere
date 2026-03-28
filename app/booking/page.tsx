@@ -7,11 +7,10 @@ import { useRouter } from "next/navigation";
 type Cabin = {
   id: string;
   name: string;
-  price: number; // 🔥 ADD
+  price: number;
 };
 
 export default function CreateBookingPage() {
-
   const [cabins, setCabins] = useState<Cabin[]>([]);
 
   const [selectedPrice, setSelectedPrice] = useState(0);
@@ -28,7 +27,20 @@ export default function CreateBookingPage() {
 
   const router = useRouter();
 
-  // 🔥 FETCH WITH PRICE
+  // 🔥 1. LOGIN CHECK (IMPORTANT)
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+
+      if (!data.user) {
+        router.replace("/login"); // ❌ block
+      }
+    };
+
+    checkUser();
+  }, [router]);
+
+  // 🔥 FETCH CABINS
   useEffect(() => {
     const fetchCabins = async () => {
       const { data } = await supabase
@@ -59,6 +71,14 @@ export default function CreateBookingPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // 🔥 EXTRA SAFETY CHECK
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) {
+      alert("Please login first ❌");
+      router.replace("/login");
+      return;
+    }
+
     const form = e.currentTarget;
 
     const name = (form.elements.namedItem("name") as HTMLInputElement).value;
@@ -69,7 +89,6 @@ export default function CreateBookingPage() {
       (form.elements.namedItem("guests") as HTMLInputElement).value
     );
 
-    // VALIDATION
     if (!cabinValue) return alert("Select cabin ❌");
     if (!guests || guests <= 0) return alert("Enter valid guests ❌");
 
@@ -89,14 +108,13 @@ export default function CreateBookingPage() {
       const backFileName = `aadhaar/${uniqueName}-back.jpg`;
 
       await supabase.storage
-  .from("aadhaar-images")
-  .upload(frontFileName, aadhaarFront);
+        .from("aadhaar-images")
+        .upload(frontFileName, aadhaarFront);
 
-await supabase.storage
-  .from("aadhaar-images")
-  .upload(backFileName, aadhaarBack);
+      await supabase.storage
+        .from("aadhaar-images")
+        .upload(backFileName, aadhaarBack);
 
-      // 🔥 SAVE WITH AMOUNT
       const { error } = await supabase.from("bookings").insert([
         {
           cabin_id: cabinValue,
@@ -105,7 +123,7 @@ await supabase.storage
           start_date: startDate,
           end_date: endDate,
           guests: guests,
-          amount: totalAmount, // 🔥 IMPORTANT
+          amount: totalAmount,
           aadhaar_front: frontFileName,
           aadhaar_back: backFileName,
           booking_type: "online",
@@ -123,7 +141,7 @@ await supabase.storage
       setSelectedPrice(0);
       setNights(0);
 
-      router.push("/");
+      router.replace("/");
     } catch (err) {
       console.error(err);
       alert("Booking failed ❌");
@@ -158,7 +176,6 @@ await supabase.storage
             className="border px-3 py-2 rounded-lg"
           />
 
-          {/* 🔥 CABIN + PRICE */}
           <select
             name="cabin"
             defaultValue=""
@@ -206,14 +223,12 @@ await supabase.storage
             />
           </div>
 
-          {/* 🔥 AMOUNT */}
           <div className="md:col-span-2 border px-3 py-2 rounded-lg bg-gray-50">
             Amount: ₹ {totalAmount} ({nights} nights)
           </div>
 
-          {/* Aadhaar Upload (UNCHANGED 🔒) */}
+          {/* Aadhaar Upload */}
           <div className="md:col-span-2">
-
             <label className="text-sm text-gray-600 block mb-2">
               Upload Aadhaar Card
             </label>
@@ -222,46 +237,35 @@ await supabase.storage
 
               <div className="border rounded-lg p-3">
                 <p className="text-xs text-gray-500 mb-2">Front Side</p>
-
                 <input
                   type="file"
-                  className="w-full"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     setAadhaarFront(file || null);
                     setFrontName(file?.name || "");
                   }}
                 />
-
                 {frontName && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    {frontName}
-                  </p>
+                  <p className="text-xs text-gray-400 mt-1">{frontName}</p>
                 )}
               </div>
 
               <div className="border rounded-lg p-3">
                 <p className="text-xs text-gray-500 mb-2">Back Side</p>
-
                 <input
                   type="file"
-                  className="w-full"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     setAadhaarBack(file || null);
                     setBackName(file?.name || "");
                   }}
                 />
-
                 {backName && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    {backName}
-                  </p>
+                  <p className="text-xs text-gray-400 mt-1">{backName}</p>
                 )}
               </div>
 
             </div>
-
           </div>
 
           <button className="bg-teal-600 text-white py-2.5 rounded-lg md:col-span-2">
