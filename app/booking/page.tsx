@@ -69,85 +69,78 @@ export default function CreateBookingPage() {
   const totalAmount = selectedPrice * nights;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // 🔥 EXTRA SAFETY CHECK
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
-      alert("Please login first ❌");
-      router.replace("/login");
-      return;
-    }
+  // 🔥 FIX: FormData use karo (no elements)
+  const formData = new FormData(e.target as HTMLFormElement);
 
-    const form = e.currentTarget;
+  const name = formData.get("name") as string;
+  const phone = formData.get("phone") as string;
+  const cabinValue = formData.get("cabin") as string;
+  const guests = Number(formData.get("guests"));
 
-    const name = (form.elements.namedItem("name") as HTMLInputElement).value;
-    const phone = (form.elements.namedItem("phone") as HTMLInputElement).value;
-    const cabinValue = (form.elements.namedItem("cabin") as HTMLSelectElement).value;
+  // 🔥 EXTRA SAFETY CHECK
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) {
+    alert("Please login first ❌");
+    router.replace("/login");
+    return;
+  }
+  const userEmail = data.user?.email;
 
-    const guests = Number(
-      (form.elements.namedItem("guests") as HTMLInputElement).value
-    );
+  if (!cabinValue) return alert("Select cabin ❌");
+  if (!guests || guests <= 0) return alert("Enter valid guests ❌");
 
-    if (!cabinValue) return alert("Select cabin ❌");
-    if (!guests || guests <= 0) return alert("Enter valid guests ❌");
+  if (!aadhaarFront || !aadhaarBack)
+    return alert("Upload both Aadhaar images ❌");
 
-    if (!aadhaarFront || !aadhaarBack)
-      return alert("Upload both Aadhaar images ❌");
+  try {
+    const uniqueName = crypto.randomUUID();
 
-    if (!aadhaarFront.type.includes("image") || !aadhaarBack.type.includes("image"))
-      return alert("Only image allowed ❌");
+    const frontFileName = `aadhaar/${uniqueName}-front.jpg`;
+    const backFileName = `aadhaar/${uniqueName}-back.jpg`;
 
-    if (aadhaarFront.size > 2 * 1024 * 1024)
-      return alert("File too large (max 2MB) ❌");
+    await supabase.storage
+      .from("aadhaar-images")
+      .upload(frontFileName, aadhaarFront);
 
-    try {
-      const uniqueName = crypto.randomUUID();
+    await supabase.storage
+      .from("aadhaar-images")
+      .upload(backFileName, aadhaarBack);
 
-      const frontFileName = `aadhaar/${uniqueName}-front.jpg`;
-      const backFileName = `aadhaar/${uniqueName}-back.jpg`;
+    const { error } = await supabase.from("bookings").insert([
+      {
+        cabin_id: cabinValue,
+        user_name: name,
+        phone: phone,
+        email: userEmail,
+        start_date: startDate,
+        end_date: endDate,
+        guests: guests,
+        amount: totalAmount,
+        aadhaar_front: frontFileName,
+        aadhaar_back: backFileName,
+        booking_type: "online",
+        status: "confirmed",
+      },
+    ]);
 
-      await supabase.storage
-        .from("aadhaar-images")
-        .upload(frontFileName, aadhaarFront);
+    if (error) throw error;
 
-      await supabase.storage
-        .from("aadhaar-images")
-        .upload(backFileName, aadhaarBack);
+    alert("Booking successful ✅");
 
-      const { error } = await supabase.from("bookings").insert([
-        {
-          cabin_id: cabinValue,
-          user_name: name,
-          phone: phone,
-          start_date: startDate,
-          end_date: endDate,
-          guests: guests,
-          amount: totalAmount,
-          aadhaar_front: frontFileName,
-          aadhaar_back: backFileName,
-          booking_type: "online",
-          status: "confirmed",
-        },
-      ]);
+    (e.target as HTMLFormElement).reset(); // ✅ FIX
+    setFrontName("");
+    setBackName("");
+    setSelectedPrice(0);
+    setNights(0);
 
-      if (error) throw error;
-
-      alert("Booking successful ✅");
-
-      form.reset();
-      setFrontName("");
-      setBackName("");
-      setSelectedPrice(0);
-      setNights(0);
-
-      router.replace("/");
-    } catch (err) {
-      console.error(err);
-      alert("Booking failed ❌");
-    }
-  };
-
+    router.replace("/");
+  } catch (err) {
+    console.error(err);
+    alert("Booking failed ❌");
+  }
+};
   return (
     <div className="max-w-3xl mx-auto px-3">
 

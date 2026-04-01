@@ -2,28 +2,29 @@
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
-
+import { useRouter, useSearchParams } from "next/navigation";
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+const redirect = searchParams.get("redirect") || "/";
 
   // 🔥 Already logged-in user → redirect
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getUser();
       if (data.user) {
-        router.replace("/");
-      }
+  router.replace(redirect); // 🔥 yaha change
+}
     };
     checkUser();
-  }, [router]);
+  }, [router, redirect]);
 
   // 🔥 GOOGLE LOGIN ONLY
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "http://localhost:3000",
+       redirectTo: `${window.location.origin}/login?redirect=${redirect}`,
       },
     });
   };

@@ -25,7 +25,7 @@ export default function Sidebar({
     <aside
   className={`${
     collapsed ? "w-20" : "w-64"
-  } bg-white border-r p-4 flex flex-col justify-between h-screen sticky top-0 overflow-hidden transition-all duration-300`}
+  } bg-white shadow-r p-4 flex flex-col justify-between h-screen sticky top-0 overflow-hidden transition-all duration-300`}
 >
       {/* TOP */}
       <div>
@@ -62,10 +62,7 @@ export default function Sidebar({
             {!collapsed && "Bookings"}
           </Link>
 
-          <Link href="/admin/users" className={linkClass("/admin/users")}>
-            <span>👤</span>
-            {!collapsed && "Users"}
-          </Link>
+          
         </nav>
       </div>
 

@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabase";
 type Booking = {
   id: string;
   user_name: string;
+  phone: string;
+  email?: string;
   start_date: string;
   end_date: string;
   guests: number;
@@ -36,7 +38,6 @@ export default function BookingsPage() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("recent");
 
-  // ✅ STATUS UPDATE
   const updateStatus = async (id: string, status: string) => {
     await supabase.from("bookings").update({ status }).eq("id", id);
 
@@ -45,7 +46,6 @@ export default function BookingsPage() {
     );
   };
 
-  // ✅ DELETE
   const deleteBooking = async (id: string) => {
     if (!confirm("Delete booking?")) return;
 
@@ -79,7 +79,6 @@ export default function BookingsPage() {
             const { data } = await supabase.storage
               .from("aadhaar-images")
               .createSignedUrl(b.aadhaar_front, 600);
-
             frontUrl = data?.signedUrl || "";
           }
 
@@ -87,7 +86,6 @@ export default function BookingsPage() {
             const { data } = await supabase.storage
               .from("aadhaar-images")
               .createSignedUrl(b.aadhaar_back, 600);
-
             backUrl = data?.signedUrl || "";
           }
 
@@ -175,7 +173,7 @@ export default function BookingsPage() {
 
         <select
           onChange={(e) => setSort(e.target.value)}
-          className="ml-auto border px-3 py-1 rounded text-sm"
+          className="ml-auto bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm"
         >
           <option value="recent">Sort by date (recent first)</option>
           <option value="old">Sort by date (earlier first)</option>
@@ -183,168 +181,170 @@ export default function BookingsPage() {
 
       </div>
 
-      <div className="bg-white rounded-xl shadow border overflow-x-auto">
+      {/* ✅ ONLY UI FIX HERE */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
 
-        <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[1200px]">
 
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Guest</th>
-              <th className="p-3 text-left">Cabin</th>
-              <th className="p-3 text-left">Check-in</th>
-              <th className="p-3 text-left">Check-out</th>
-              <th className="p-3 text-left">Guests</th>
-              <th className="p-3 text-left">Amount</th>
-              <th className="p-3 text-left">Type</th>
-              <th className="p-3 text-left">Aadhaar</th>
-              <th className="p-3 text-left">Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredBookings.map((b) => (
-              <tr key={b.id} className="border-t">
-
-                <td className="p-3">{b.user_name}</td>
-                <td className="p-3">{b.cabinName}</td>
-                <td className="p-3">{b.start_date}</td>
-                <td className="p-3">{b.end_date}</td>
-                <td className="p-3">{b.guests}</td>
-
-                <td className="p-3 font-medium text-green-700">
-                  ₹ {b.amount || 0}
-                </td>
-
-                <td className="p-3">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    b.booking_type === "online"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-blue-100 text-blue-700"
-                  }`}>
-                    {b.booking_type === "online" ? "Online" : "Offline"}
-                  </span>
-                </td>
-
-                {/* Aadhaar */}
-                <td className="p-3">
-                  <div className="flex gap-2">
-
-                    {b.frontUrl && (
-                      <Image
-                        src={b.frontUrl}
-                        alt="front"
-                        width={64}
-                        height={48}
-                        className="cursor-pointer rounded"
-                        unoptimized
-                        onClick={() => window.open(b.frontUrl!, "_blank")}
-                      />
-                    )}
-
-                    {b.backUrl && (
-                      <Image
-                        src={b.backUrl}
-                        alt="back"
-                        width={64}
-                        height={48}
-                        className="cursor-pointer rounded"
-                        unoptimized
-                        onClick={() => window.open(b.backUrl!, "_blank")}
-                      />
-                    )}
-
-                  </div>
-                </td>
-
-                {/* STATUS + DROPDOWN */}
-                <td className="p-3">
-                  <button
-  onClick={(e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-
-    setDropdownPos({
-      top: rect.bottom + window.scrollY,
-      left: Math.max(10, rect.right - 140),
-    });
-
-    setOpenId(openId === b.id ? null : b.id);
-  }}
-  className="px-2 py-1 rounded text-xs border bg-gray-100 flex items-center gap-1"
->
-  <span
-    className={`px-2 py-1 rounded text-xs ${
-      b.status === "confirmed"
-        ? "bg-green-100 text-green-700"
-        : b.status === "cancelled"
-        ? "bg-yellow-100 text-yellow-700"
-        : "bg-red-100 text-red-700"
-    }`}
-  >
-    {b.status}
-  </span>
-  ⋮
-</button>
-                </td>
-
+            <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+              <tr>
+                <th className="p-3 text-left">Guest</th>
+                <th className="p-3 text-left">Phone</th>
+                <th className="p-3 text-left">Email</th>
+                <th className="p-3 text-left">Cabin</th>
+                <th className="p-3 text-left">Check-in</th>
+                <th className="p-3 text-left">Check-out</th>
+                <th className="p-3 text-left">Guests</th>
+                <th className="p-3 text-left">Amount</th>
+                <th className="p-3 text-left">Type</th>
+                <th className="p-3 text-left">Aadhaar</th>
+                <th className="p-3 text-left">Status</th>
               </tr>
-            ))}
-          </tbody>
+            </thead>
 
-        </table>
+            <tbody>
+              {filteredBookings.map((b) => (
+                <tr key={b.id}>
 
+                  <td className="p-3">{b.user_name}</td>
+                  <td className="p-3">{b.phone}</td>
+                  <td className="p-3">{b.email || "-"}</td>
+                  <td className="p-3">{b.cabinName}</td>
+                  <td className="p-3">{b.start_date}</td>
+                  <td className="p-3">{b.end_date}</td>
+                  <td className="p-3">{b.guests}</td>
+
+                  <td className="p-3 font-medium text-green-700">
+                    ₹ {b.amount || 0}
+                  </td>
+
+                  <td className="p-3">
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      b.booking_type === "online"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}>
+                      {b.booking_type === "online" ? "Online" : "Offline"}
+                    </span>
+                  </td>
+
+                  <td className="p-3">
+  <div className="flex gap-2">
+
+    {b.frontUrl && (
+      <Image
+        src={b.frontUrl}
+        alt="front"
+        width={64}
+        height={48}
+        className="cursor-pointer rounded"
+        unoptimized
+        onClick={() => window.open(b.frontUrl!, "_blank")}
+      />
+    )}
+
+    {b.backUrl && (
+      <Image
+        src={b.backUrl}
+        alt="back"
+        width={64}
+        height={48}
+        className="cursor-pointer rounded"
+        unoptimized
+        onClick={() => window.open(b.backUrl!, "_blank")}
+      />
+    )}
+
+  </div>
+</td>
+
+                  <td className="p-3">
+                    <button
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setDropdownPos({
+                          top: rect.bottom + window.scrollY,
+                          left: Math.max(10, rect.right - 140),
+                        });
+                        setOpenId(openId === b.id ? null : b.id);
+                      }}
+                      className="px-2 py-1 rounded text-xs bg-gray-100 flex items-center gap-1"
+                    >
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        b.status === "confirmed"
+                          ? "bg-green-100 text-green-700"
+                          : b.status === "cancelled"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-700"
+                      }`}>
+                        {b.status}
+                      </span>
+                      ⋮
+                    </button>
+                  </td>
+
+                </tr>
+              ))}
+            </tbody>
+
+          </table>
+
+        </div>
       </div>
 
-      {/* 🔥 DROPDOWN */}
-      {openId && (
-        <div
-          style={{
-            position: "absolute",
-            top: dropdownPos.top,
-            left: dropdownPos.left,
-          }}
-          className="bg-white border rounded-lg shadow-lg text-sm z-[9999] w-36 py-1"
-        >
-          <button
-            onClick={() => {
-              updateStatus(openId, "confirmed");
-              setOpenId(null);
-            }}
-            className="block px-3 py-2 hover:bg-gray-100 w-full text-left"
-          >
-            Confirm
-          </button>
+     {openId && (
+  <div
+    style={{
+      position: "absolute",
+      top: dropdownPos.top,
+      left: dropdownPos.left,
+    }}
+    className="bg-white border rounded-lg shadow-lg text-sm z-[9999] w-36 py-1"
+  >
 
-          <button
-            onClick={() => {
-              updateStatus(openId, "cancelled");
-              setOpenId(null);
-            }}
-            className="block px-3 py-2 hover:bg-gray-100 w-full text-left"
-          >
-            Cancel
-          </button>
+    <button
+      onClick={() => {
+        updateStatus(openId, "confirmed");
+        setOpenId(null); // ✅ CLOSE
+      }}
+      className="block px-3 py-2 hover:bg-gray-100 w-full text-left"
+    >
+      Confirm
+    </button>
 
-          <button
-            onClick={() => {
-              updateStatus(openId, "rejected");
-              setOpenId(null);
-            }}
-            className="block px-3 py-2 hover:bg-gray-100 w-full text-left"
-          >
-            Reject
-          </button>
+    <button
+      onClick={() => {
+        updateStatus(openId, "cancelled");
+        setOpenId(null); // ✅ CLOSE
+      }}
+      className="block px-3 py-2 hover:bg-gray-100 w-full text-left"
+    >
+      Cancel
+    </button>
 
-          <button
-            onClick={() => {
-              deleteBooking(openId);
-              setOpenId(null);
-            }}
-            className="block px-3 py-2 hover:bg-red-100 text-red-600 w-full text-left"
-          >
-            Delete
-          </button>
-        </div>
-      )}
+    <button
+      onClick={() => {
+        updateStatus(openId, "rejected");
+        setOpenId(null); // ✅ CLOSE
+      }}
+      className="block px-3 py-2 hover:bg-gray-100 w-full text-left"
+    >
+      Reject
+    </button>
+
+    <button
+      onClick={() => {
+        deleteBooking(openId);
+        setOpenId(null); // ✅ CLOSE
+      }}
+      className="block px-3 py-2 hover:bg-red-100 text-red-600 w-full text-left"
+    >
+      Delete
+    </button>
+
+  </div>
+)}
 
     </div>
   );

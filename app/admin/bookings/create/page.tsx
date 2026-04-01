@@ -68,12 +68,14 @@ export default function CreateBookingPage() {
 
    await supabase.storage.from("aadhaar-images").upload(frontPath, aadhaarFront);
 await supabase.storage.from("aadhaar-images").upload(backPath, aadhaarBack);
-
+     const { data } = await supabase.auth.getUser();
+const userEmail = data.user?.email;
     const { error } = await supabase.from("bookings").insert([
       {
         cabin_id: cabinId,
         user_name: name,
         phone,
+        email: userEmail,
         start_date: startDate,
         end_date: endDate,
         guests,

@@ -1,5 +1,5 @@
 "use client";
-
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
 // import Link from "next/link";
@@ -18,6 +18,7 @@ type Cabin = {
 
 export default function CabinDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
 
   const [cabin, setCabin] = useState<Cabin | null>(null);
@@ -112,16 +113,15 @@ export default function CabinDetailsPage() {
 
            <button
   onClick={async () => {
-    const { data } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
 
-    if (!data.user) {
-      alert("Please login first ❌");
-      window.location.href = "/login";
-      return;
-    }
+  if (!data.user) {
+    router.push(`/login?redirect=/booking?cabinId=${cabin.id}`);
+    return;
+  }
 
-    window.location.href = `/booking?cabinId=${cabin.id}`;
-  }}
+  router.push(`/booking?cabinId=${cabin.id}`);
+}}
   className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700"
 >
   Book Now

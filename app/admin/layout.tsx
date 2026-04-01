@@ -17,18 +17,30 @@ export default function AdminLayout({
   const [collapsed, setCollapsed] = useState(false);
 
   // ✅ AUTH GUARD (HOOK ALWAYS TOP LEVEL)
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const { data } = await supabase.auth.getUser();
+useEffect(() => {
+  const checkAdmin = async () => {
+    const { data } = await supabase.auth.getUser();
 
-      // 👉 agar user login nahi hai → login page bhejo
-      if (!data.user && pathname !== "/admin/login") {
-        router.replace("/admin/login");
-      }
-    };
+    if (!data.user) {
+      router.replace("/admin/login");
+      return;
+    }
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profile?.role !== "admin") {
+      router.replace("/");
+    }
+  };
+
+  if (pathname !== "/admin/login") {
     checkAdmin();
-  }, [router, pathname]); // ✅ dependency fix
+  }
+}, [router, pathname]);
 
   // ✅ LOGOUT
   const handleLogout = async () => {
