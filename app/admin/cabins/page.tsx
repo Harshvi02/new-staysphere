@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import Loader from "@/components/Loader"; // ✅ IMPORT LOADER
 
 // ✅ Type update (image_url add किया)
 type Cabin = {
@@ -16,9 +17,12 @@ type Cabin = {
 
 export default function CabinsPage() {
   const [cabins, setCabins] = useState<Cabin[]>([]);
+  const [loading, setLoading] = useState(true); // ✅ NEW - LOADING STATE
 
   useEffect(() => {
     const fetchCabins = async () => {
+      setLoading(true); // ✅ START LOADING
+      
       const { data, error } = await supabase
         .from("cabins")
         .select("*")
@@ -29,6 +33,8 @@ export default function CabinsPage() {
       } else {
         setCabins(data || []);
       }
+      
+      setLoading(false); // ✅ STOP LOADING
     };
 
     fetchCabins();
@@ -51,11 +57,16 @@ export default function CabinsPage() {
     }
   };
 
+  // ✅ LOADER CHECK
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
     <div className="space-y-6">
 
       <div className="flex justify-between items-center">
-        <h1 className="text-xl md:text-2xl font-bold">Cabins</h1>
+       <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">Cabins</h1>
 
         <Link
           href="/admin/cabins/add"
@@ -65,11 +76,10 @@ export default function CabinsPage() {
         </Link>
       </div>
 
-      <div className="bg-white shadow rounded-xl border overflow-x-auto">
+      <div className="bg-white shadow rounded-xl  overflow-x-auto">
         <table className="min-w-full text-xs md:text-sm lg:text-base">
 
-          {/* ✅ HEADER UPDATE */}
-          <thead className="bg-gray-100">
+          <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
               <th className="p-2 md:p-3 text-left">Image</th>
               <th className="p-2 md:p-3 text-left">Name</th>
@@ -82,18 +92,17 @@ export default function CabinsPage() {
           <tbody>
 
             {cabins.map((cabin) => (
-              <tr key={cabin.id} className="border-t hover:bg-gray-50">
+              <tr key={cabin.id} className=" hover:bg-gray-50">
 
-                {/* ✅ IMAGE COLUMN */}
-               <td className="p-2 md:p-4">
-  <Image
-    src={cabin.image_url}
-    alt={cabin.name}
-    width={64}
-    height={48}
-    className="object-cover rounded"
-  />
-</td>
+                <td className="p-2 md:p-4">
+                  <Image
+                    src={cabin.image_url}
+                    alt={cabin.name}
+                    width={64}
+                    height={48}
+                    className="object-cover rounded"
+                  />
+                </td>
 
                 <td className="p-2 md:p-4 whitespace-nowrap">
                   {cabin.name}

@@ -7,11 +7,13 @@ type Cabin = {
   id: string;
   name: string;
   price: number;
+  max_guests: number;
 };
 
 export default function CreateBookingPage() {
   const [cabins, setCabins] = useState<Cabin[]>([]);
   const [price, setPrice] = useState(0);
+  const [selectedMaxGuests, setSelectedMaxGuests] = useState(0);
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -22,7 +24,6 @@ export default function CreateBookingPage() {
   const [frontName, setFrontName] = useState("");
   const [backName, setBackName] = useState("");
 
-  // 🔥 nights calculation
   const calculateNights = (start: string, end: string) => {
     if (!start || !end) return 0;
     const s = new Date(start);
@@ -38,7 +39,7 @@ export default function CreateBookingPage() {
     const fetchCabins = async () => {
       const { data } = await supabase
         .from("cabins")
-        .select("id, name, price");
+        .select("id, name, price, max_guests");
 
       setCabins((data as Cabin[]) || []);
     };
@@ -61,15 +62,46 @@ export default function CreateBookingPage() {
       return;
     }
 
-    const unique = crypto.randomUUID();
+    if (phone.length !== 10) {
+      alert("Please enter a valid 10-digit phone number ❌");
+      return;
+    }
+    if (!/^\d+$/.test(phone)) {
+      alert("Phone number should contain only digits ❌");
+      return;
+    }
 
+    // ✅ NEW - Date conflict check
+    const { data: existingBookings } = await supabase
+      .from("bookings")
+      .select("start_date, end_date")
+      .eq("cabin_id", cabinId)
+      .eq("status", "confirmed");
+
+    const isConflict = (existingBookings || []).some((booking) => {
+      const existStart = new Date(booking.start_date);
+      const existEnd = new Date(booking.end_date);
+      const newStart = new Date(startDate);
+      const newEnd = new Date(endDate);
+      return newStart < existEnd && newEnd > existStart;
+    });
+
+    if (isConflict) {
+      alert("❌ Cabin already booked for these dates! Please select different dates.");
+      return;
+    }
+    // ✅ END - Date conflict check
+
+    const unique = crypto.randomUUID();
     const frontPath = `aadhaar/${unique}-front.jpg`;
     const backPath = `aadhaar/${unique}-back.jpg`;
 
-   await supabase.storage.from("aadhaar-images").upload(frontPath, aadhaarFront);
-await supabase.storage.from("aadhaar-images").upload(backPath, aadhaarBack);
-     const { data } = await supabase.auth.getUser();
-const userEmail = data.user?.email;
+    await supabase.storage.from("aadhaar-images").upload(frontPath, aadhaarFront);
+    await supabase.storage.from("aadhaar-images").upload(backPath, aadhaarBack);
+
+    const { data } = await supabase.auth.getUser();
+    const userEmail = data.user?.email;
+
     const { error } = await supabase.from("bookings").insert([
       {
         cabin_id: cabinId,
@@ -79,7 +111,7 @@ const userEmail = data.user?.email;
         start_date: startDate,
         end_date: endDate,
         guests,
-        amount: totalAmount, // 🔥 FINAL TOTAL
+        amount: totalAmount,
         aadhaar_front: frontPath,
         aadhaar_back: backPath,
         booking_type: "offline",
@@ -92,6 +124,7 @@ const userEmail = data.user?.email;
     alert("Booking created ✅");
     form.reset();
     setPrice(0);
+    setSelectedMaxGuests(0);
     setStartDate("");
     setEndDate("");
   };
@@ -103,7 +136,7 @@ const userEmail = data.user?.email;
         Create Booking
       </h1>
 
-      <div className="bg-white p-5 rounded-2xl shadow-md border">
+      <div className="bg-white p-5 rounded-2xl shadow-md">
 
         <form
           onSubmit={handleSubmit}
@@ -119,12 +152,17 @@ const userEmail = data.user?.email;
 
           <input
             name="phone"
-            type="text"
+            type="tel"
             placeholder="Phone Number"
+            maxLength={10}
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
             className="border px-3 py-2 rounded-lg"
           />
 
-          {/* Cabin */}
           <select
             name="cabin"
             required
@@ -134,12 +172,13 @@ const userEmail = data.user?.email;
                 (c) => String(c.id) === e.target.value
               );
               setPrice(selected?.price || 0);
+              setSelectedMaxGuests(selected?.max_guests || 0);
             }}
           >
             <option value="">Select Cabin</option>
             {cabins.map((cabin) => (
               <option key={cabin.id} value={String(cabin.id)}>
-                {cabin.name} (₹{cabin.price})
+                {cabin.name} (₹{cabin.price}) - Max {cabin.max_guests} Guests
               </option>
             ))}
           </select>
@@ -148,10 +187,15 @@ const userEmail = data.user?.email;
             name="guests"
             type="number"
             placeholder="Guests"
+            value={selectedMaxGuests || ""}
+            onChange={(e) => {
+              const newValue = parseInt(e.target.value);
+              if (!isNaN(newValue)) {
+              }
+            }}
             className="border px-3 py-2 rounded-lg"
           />
 
-          {/* Dates */}
           <div>
             <label className="text-sm text-gray-600">Check-in</label>
             <input
@@ -172,12 +216,10 @@ const userEmail = data.user?.email;
             />
           </div>
 
-          {/* ✅ FINAL AMOUNT */}
           <div className="border px-3 py-2 rounded-lg md:col-span-2 bg-gray-50">
             Amount: ₹ {totalAmount} ({nights} nights)
           </div>
 
-          {/* Aadhaar */}
           <div className="md:col-span-2">
             <label className="text-sm text-gray-600 block mb-2">
               Upload Aadhaar Card

@@ -10,6 +10,7 @@ export default function AddCabinPage() {
     const form = e.currentTarget;
 
     const name = (form.elements.namedItem("name") as HTMLInputElement).value;
+    const type = (form.elements.namedItem("type") as HTMLSelectElement).value; // ✅ type bhi lo
     const price = (form.elements.namedItem("price") as HTMLInputElement).value;
     const maxGuests = (form.elements.namedItem("capacity") as HTMLInputElement).value;
     const description = (form.elements.namedItem("description") as HTMLTextAreaElement).value;
@@ -40,6 +41,7 @@ export default function AddCabinPage() {
       const { error } = await supabase.from("cabins").insert([
         {
           name,
+          type,        // ✅ type save hoga
           description,
           price,
           max_guests: maxGuests,
@@ -53,14 +55,13 @@ export default function AddCabinPage() {
       form.reset();
 
     } catch (err: unknown) {
-  console.error(err);
-
-  if (err instanceof Error) {
-    alert(err.message);
-  } else {
-    alert("Error ❌");
-  }
-}
+      console.error(err);
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert("Error ❌");
+      }
+    }
   };
 
   return (
@@ -77,8 +78,25 @@ export default function AddCabinPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          <input name="name" placeholder="Cabin Name" className="border p-3 rounded-lg w-full" />
-          <input name="type" placeholder="Cabin Type" className="border p-3 rounded-lg w-full" />
+          {/* ✅ Cabin Name add kiya */}
+          <input
+            name="name"
+            placeholder="Cabin Name"
+            className="border p-3 rounded-lg w-full"
+          />
+
+          {/* ✅ Sirf dropdown rakha, duplicate input hata diya */}
+          <select name="type" className="border p-3 rounded-lg w-full">
+            <option value="">Select Cabin Type</option>
+            <option value="Mountain Cabin">Mountain Cabin</option>
+            <option value="Beach Cabin">Beach Cabin</option>
+            <option value="Luxury Cabin">Luxury Cabin</option>
+            <option value="Lakeside Cabin">Lakeside Cabin</option>
+            <option value="Standard Cabin">Standard Cabin</option>
+            <option value="Ocean View Cabin">Ocean View Cabin</option>
+            <option value="Forest Retreat Cabin">Forest Retreat Cabin</option>
+          </select>
+
           <input name="price" type="number" placeholder="Price" className="border p-3 rounded-lg w-full" />
           <input name="discount" type="number" placeholder="Discount (%)" className="border p-3 rounded-lg w-full" />
           <input name="capacity" type="number" placeholder="Capacity (Guests)" className="border p-3 rounded-lg w-full" />

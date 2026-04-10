@@ -23,10 +23,10 @@ export default function Sidebar({
 
   return (
     <aside
-  className={`${
-    collapsed ? "w-20" : "w-64"
-  } bg-white shadow-r p-4 flex flex-col justify-between h-screen sticky top-0 overflow-hidden transition-all duration-300`}
->
+      className={`${
+        collapsed ? "w-20" : "w-64"
+      } bg-white shadow-r p-4 flex flex-col justify-between h-screen sticky top-0 overflow-hidden transition-all duration-300`}
+    >
       {/* TOP */}
       <div>
         {/* Logo + Collapse */}
@@ -62,14 +62,18 @@ export default function Sidebar({
             {!collapsed && "Bookings"}
           </Link>
 
-          
+          {/* ✅ CONTACTS LINK ADDED */}
+          <Link href="/admin/contacts" className={linkClass("/admin/contacts")}>
+            <span>📧</span>
+            {!collapsed && "Contacts"}
+          </Link>
         </nav>
       </div>
 
       {/* Logout */}
       <button
         onClick={handleLogout}
-        className="bg-red-500 text-white py-2 rounded-lg hover:bg-red-600"
+        className="bg-blue-400 text-white py-2 rounded-lg hover:bg-red-500"
       >
         {collapsed ? "🚪" : "Logout"}
       </button>

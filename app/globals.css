@@ -25,3 +25,26 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: #888;
 }
+select option:checked {
+  background-color: #ccfbf1; /* teal-100 */
+  color: #0f766e; /* teal-700 */
+}
+/* Custom scrollbar for image viewer */
+.overflow-auto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+  background: #333;
+  border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}

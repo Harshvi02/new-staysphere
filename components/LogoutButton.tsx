@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function LogoutButton() {
@@ -14,7 +14,7 @@ export default function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition"
+      className="w-full bg-red-400 hover:bg-red-500 text-white py-2 rounded-lg transition"
     >
       Logout
     </button>
