@@ -116,9 +116,14 @@ export default function Navbar() {
             )}
           </div>
 
-          <Link href="/my-bookings" className={linkClass("/my-bookings")}>My Bookings</Link>
+          {/* ✅ FIX: My Bookings ONLY for logged-in users */}
+          {user && (
+            <Link href="/my-bookings" className={linkClass("/my-bookings")}>
+              My Bookings
+            </Link>
+          )}
+          
           <Link href="/about" className={linkClass("/about")}>About</Link>
-          {/* ✅ CONTACT LINK ADDED */}
           <Link href="/contact" className={linkClass("/contact")}>Contact</Link>
         </div>
 
@@ -165,11 +170,17 @@ export default function Navbar() {
             className="block text-sm text-gray-700 hover:text-teal-600 font-medium">Home</Link>
           <Link href="/cabins" onClick={() => setMenuOpen(false)}
             className="block text-sm text-gray-700 hover:text-teal-600 font-medium">Cabins</Link>
-          <Link href="/my-bookings" onClick={() => setMenuOpen(false)}
-            className="block text-sm text-gray-700 hover:text-teal-600 font-medium">My Bookings</Link>
+          
+          {/* ✅ FIX: My Bookings ONLY for logged-in users */}
+          {user && (
+            <Link href="/my-bookings" onClick={() => setMenuOpen(false)}
+              className="block text-sm text-gray-700 hover:text-teal-600 font-medium">
+              My Bookings
+            </Link>
+          )}
+          
           <Link href="/about" onClick={() => setMenuOpen(false)}
             className="block text-sm text-gray-700 hover:text-teal-600 font-medium">About</Link>
-          {/* ✅ CONTACT LINK ADDED IN MOBILE MENU */}
           <Link href="/contact" onClick={() => setMenuOpen(false)}
             className="block text-sm text-gray-700 hover:text-teal-600 font-medium">Contact</Link>
           <div className="pt-2 border-t">

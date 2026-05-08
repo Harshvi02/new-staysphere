@@ -39,6 +39,14 @@ export default function DashboardPage() {
     (Booking & { cabinName: string })[]
   >([]);
 
+  // Helper function to get local date string (YYYY-MM-DD)
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -49,9 +57,10 @@ export default function DashboardPage() {
 
       setTotalCabins(cabinsData?.length || 0);
 
+      // ✅ FIXED: Use local date for fromDate
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - dayFilter);
-      const fromDateStr = fromDate.toISOString().split("T")[0];
+      const fromDateStr = getLocalDateString(fromDate);
 
       const { data: bookingsData } = await supabase
         .from("bookings")
@@ -65,7 +74,8 @@ export default function DashboardPage() {
       setOnlineBookings(bookings.filter((b) => b.booking_type === "online").length);
       setOfflineBookings(bookings.filter((b) => b.booking_type === "offline").length);
 
-      const today = new Date().toISOString().split("T")[0];
+      // ✅ FIXED: Use local date for today
+      const today = getLocalDateString(new Date());
 
       setCheckinsToday(bookings.filter((b) => b.start_date === today).length);
       setCheckoutsToday(bookings.filter((b) => b.end_date === today).length);
@@ -82,6 +92,7 @@ export default function DashboardPage() {
       }, 0);
       setOccupancyRate(Math.min(100, Math.round((bookedDays / totalDays) * 100)));
 
+      // ✅ FIXED: Use local date for arrivals/departures
       const arrivals = bookings
         .filter((b) => b.start_date === today)
         .map((b) => ({
@@ -138,10 +149,10 @@ export default function DashboardPage() {
               key={d}
               onClick={() => setDayFilter(d)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-  dayFilter === d
-    ? "bg-teal-100 text-teal-700 border border-teal-300"
-    : "bg-white border border-gray-200 text-gray-600 hover:bg-teal-50"
-}`}
+                dayFilter === d
+                  ? "bg-teal-100 text-teal-700 border border-teal-300"
+                  : "bg-white border border-gray-200 text-gray-600 hover:bg-teal-50"
+              }`}
             >
               Last {d} days
             </button>
@@ -174,7 +185,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        {/* ✅ CHANGED - Today section */}
+        {/* Today's Arrivals & Departures */}
         <div className="bg-white rounded-2xl shadow p-5">
           <h2 className="text-lg font-semibold mb-4">Today</h2>
 
@@ -223,15 +234,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stay Duration Summary - SAME */}
+        {/* Stay Duration Summary */}
         <div className="bg-white rounded-2xl shadow p-5">
           <h2 className="text-lg font-semibold mb-4">Stay Duration Summary</h2>
           <div className="space-y-3">
             {[
               { label: "1-2 nights", value: stayDuration.short, color: "bg-blue-300" },
-              { label: "3 nights", value: stayDuration.medium, color: "bg-yellow-300" },
+              { label: "3 nights", value: stayDuration.medium, color: "bg-pink-300" },
               { label: "4-5 nights", value: stayDuration.long, color: "bg-green-300" },
-              { label: "6-7 nights", value: stayDuration.veryLong, color: "bg-teal-300" },
+              { label: "6+ nights", value: stayDuration.veryLong, color: "bg-teal-300" },
             ].map((item, i) => (
               <div key={i}>
                 <div className="flex justify-between text-sm mb-1">
@@ -251,7 +262,7 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* RECENT BOOKINGS - SAME */}
+      {/* Recent Bookings */}
       <div className="bg-white rounded-2xl shadow p-4 md:p-6">
         <h2 className="text-lg font-semibold mb-4">Recent Bookings</h2>
         <div className="overflow-x-auto max-h-[400px] overflow-y-auto rounded-xl">

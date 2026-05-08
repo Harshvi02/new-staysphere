@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import PaymentButton from "@/components/PaymentButton"; // ✅ ADD THIS IMPORT
+import PaymentButton from "@/components/PaymentButton";
 
 type Cabin = {
   id: string;
@@ -28,8 +28,12 @@ export default function CreateBookingPage() {
   const [frontName, setFrontName] = useState("");
   const [backName, setBackName] = useState("");
 
-  // ✅ NEW - Payment states
-  const [step, setStep] = useState(1); // 1 = Form, 2 = Payment
+  // User details for auto-fill
+  const [userName, setUserName] = useState("");
+  const [userPhone, setUserPhone] = useState("");
+
+  // Payment states
+  const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<string | null>(null);
 
   const router = useRouter();
@@ -47,6 +51,31 @@ export default function CreateBookingPage() {
     };
     checkUser();
   }, [router]);
+
+  // Fetch logged-in user details for auto-fill
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, phone")
+          .eq("id", userData.user.id)
+          .single();
+        
+        if (profile?.full_name) {
+          setUserName(profile.full_name);
+        } else {
+          setUserName(userData.user.email?.split("@")[0] || "");
+        }
+        
+        if (profile?.phone) {
+          setUserPhone(profile.phone);
+        }
+      }
+    };
+    fetchUserDetails();
+  }, []);
 
   // Fetch cabins
   useEffect(() => {
@@ -88,9 +117,35 @@ export default function CreateBookingPage() {
 
   const totalAmount = selectedPrice * nights;
 
-  // ✅ MODIFIED handleSubmit
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // ✅ PAST DATE VALIDATION
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const checkInDate = new Date(startDate);
+    const checkOutDate = new Date(endDate);
+    
+    if (!startDate || !endDate) {
+      alert("❌ Please select both check-in and check-out dates!");
+      return;
+    }
+    
+    if (checkInDate < today) {
+      alert("❌ Check-in date cannot be in the past! Please select today or future date.");
+      return;
+    }
+    
+    if (checkOutDate < today) {
+      alert("❌ Check-out date cannot be in the past! Please select today or future date.");
+      return;
+    }
+    
+    if (checkInDate >= checkOutDate) {
+      alert("❌ Check-out date must be after check-in date!");
+      return;
+    }
 
     const formData = new FormData(e.target as HTMLFormElement);
     const name = formData.get("name") as string;
@@ -152,7 +207,6 @@ export default function CreateBookingPage() {
       await supabase.storage.from("aadhaar-images").upload(frontFileName, aadhaarFront);
       await supabase.storage.from("aadhaar-images").upload(backFileName, aadhaarBack);
 
-      // ✅ MODIFIED - Save as PENDING payment
       const { data: booking, error } = await supabase
         .from("bookings")
         .insert([{
@@ -167,15 +221,14 @@ export default function CreateBookingPage() {
           aadhaar_front: frontFileName,
           aadhaar_back: backFileName,
           booking_type: "online",
-          payment_status: "pending",  // ✅ NEW
-          status: "pending_payment",  // ✅ NEW
+          payment_status: "pending",
+          status: "pending_payment",
         }])
         .select()
         .single();
 
       if (error) throw error;
 
-      // ✅ NEW - Move to payment step
       setBookingId(booking.id);
       setStep(2);
 
@@ -185,19 +238,17 @@ export default function CreateBookingPage() {
     }
   };
 
-  // ✅ NEW - Payment success handler
   const handlePaymentSuccess = () => {
     alert("✅ Payment successful! Booking confirmed.");
     router.push("/my-bookings");
   };
 
-  // ✅ NEW - Payment failure handler
   const handlePaymentFailure = (error: string) => {
     alert(`Payment failed: ${error}`);
     setStep(1);
   };
 
-  // ✅ NEW - STEP 2: Payment Page
+  // STEP 2: Payment Page
   if (step === 2 && bookingId) {
     return (
       <div className="max-w-md mx-auto px-4 py-12">
@@ -225,7 +276,7 @@ export default function CreateBookingPage() {
     );
   }
 
-  // ✅ STEP 1: Booking Form (modified button text)
+  // STEP 1: Booking Form
   return (
     <div className="max-w-3xl mx-auto px-3">
       <h1 className="text-2xl font-semibold mb-6">Create Booking</h1>
@@ -233,13 +284,19 @@ export default function CreateBookingPage() {
       <div className="bg-white p-5 rounded-2xl shadow-md">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
-          <input name="name" type="text" placeholder="Guest Name"
-            className="border px-3 py-2 rounded-lg" />
+          <input 
+            name="name" 
+            type="text" 
+            placeholder="Guest Name"
+            defaultValue={userName || ""}
+            className="border px-3 py-2 rounded-lg" 
+          />
 
           <input
             name="phone"
             type="tel"
             placeholder="Phone Number"
+            defaultValue={userPhone || ""}
             maxLength={10}
             onKeyPress={(e) => {
               if (!/[0-9]/.test(e.key)) {
@@ -270,7 +327,6 @@ export default function CreateBookingPage() {
             ))}
           </select>
 
-          {/* ✅ SIRF YEH 1 LINE ADD KI HAI */}
           <input type="hidden" name="cabin" value={selectedCabinId} />
 
           <input
@@ -291,18 +347,28 @@ export default function CreateBookingPage() {
             className="border px-3 py-2 rounded-lg"
           />
 
+          {/* Check-in with min=today */}
           <div>
             <label className="text-sm text-gray-600">Check-in</label>
-            <input name="start" type="date"
+            <input 
+              name="start" 
+              type="date"
+              min={new Date().toISOString().split("T")[0]}
               className="border px-3 py-2 rounded-lg w-full"
-              onChange={(e) => setStartDate(e.target.value)} />
+              onChange={(e) => setStartDate(e.target.value)} 
+            />
           </div>
 
+          {/* Check-out with min=startDate or today */}
           <div>
             <label className="text-sm text-gray-600">Check-out</label>
-            <input name="end" type="date"
+            <input 
+              name="end" 
+              type="date"
+              min={startDate || new Date().toISOString().split("T")[0]}
               className="border px-3 py-2 rounded-lg w-full"
-              onChange={(e) => setEndDate(e.target.value)} />
+              onChange={(e) => setEndDate(e.target.value)} 
+            />
           </div>
 
           <div className="md:col-span-2 border px-3 py-2 rounded-lg bg-gray-50">
@@ -313,30 +379,49 @@ export default function CreateBookingPage() {
             <label className="text-sm text-gray-600 block mb-2">Upload Aadhaar Card</label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
+              {/* Front Side - Only JPEG files allowed */}
               <div className="border rounded-lg p-3">
                 <p className="text-xs text-gray-500 mb-2">Front Side</p>
-                <input type="file" onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  setAadhaarFront(file || null);
-                  setFrontName(file?.name || "");
-                }} />
+                <input 
+                  type="file" 
+                  accept="image/jpeg, image/jpg"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && !file.type.includes("jpeg") && !file.type.includes("jpg")) {
+                      alert("❌ Only JPEG/JPG files are allowed!");
+                      e.target.value = "";
+                      return;
+                    }
+                    setAadhaarFront(file || null);
+                    setFrontName(file?.name || "");
+                  }} 
+                />
                 {frontName && <p className="text-xs text-gray-400 mt-1">{frontName}</p>}
               </div>
 
+              {/* Back Side - Only JPEG files allowed */}
               <div className="border rounded-lg p-3">
                 <p className="text-xs text-gray-500 mb-2">Back Side</p>
-                <input type="file" onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  setAadhaarBack(file || null);
-                  setBackName(file?.name || "");
-                }} />
+                <input 
+                  type="file" 
+                  accept="image/jpeg, image/jpg"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && !file.type.includes("jpeg") && !file.type.includes("jpg")) {
+                      alert("❌ Only JPEG/JPG files are allowed!");
+                      e.target.value = "";
+                      return;
+                    }
+                    setAadhaarBack(file || null);
+                    setBackName(file?.name || "");
+                  }} 
+                />
                 {backName && <p className="text-xs text-gray-400 mt-1">{backName}</p>}
               </div>
 
             </div>
           </div>
 
-          {/* ✅ MODIFIED - Button text changed */}
           <button type="submit" className="bg-teal-600 text-white py-2.5 rounded-lg md:col-span-2">
             Proceed to Payment
           </button>
